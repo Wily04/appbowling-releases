@@ -25,10 +25,10 @@ jobs:
       - name: Mantener activa la API
         shell: bash
         env:
-          URL: ${{ vars.BOWLING_SWAGGER_URL }}
+          URL: ${{ vars.BOWLING_PING_URL }}
         run: |
           if [ -z "$URL" ]; then
-            echo "No existe la variable BOWLING_SWAGGER_URL."
+            echo "ERROR: No existe la variable BOWLING_PING_URL."
             exit 1
           fi
 
