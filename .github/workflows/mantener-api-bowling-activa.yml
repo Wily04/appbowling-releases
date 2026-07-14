@@ -1,0 +1,61 @@
+name: Mantener API Bowling activa
+
+on:
+  schedule:
+    # Ejecuta el ping cada 5 minutos, evitando el minuto 0 de cada hora.
+    - cron: "3/5 * * * *"
+
+  # Permite probarlo manualmente desde la pestaña Actions.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mantener-api-bowling-activa
+  cancel-in-progress: true
+
+jobs:
+  ping:
+    name: Ping a Swagger
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - name: Mantener activa la API
+        shell: bash
+        env:
+          URL: ${{ vars.BOWLING_SWAGGER_URL }}
+        run: |
+          if [ -z "$URL" ]; then
+            echo "No existe la variable BOWLING_SWAGGER_URL."
+            exit 1
+          fi
+
+          for intento in 1 2 3; do
+            codigo="000"
+
+            if respuesta=$(curl \
+              --location \
+              --silent \
+              --show-error \
+              --output /dev/null \
+              --write-out "%{http_code}" \
+              --connect-timeout 20 \
+              --max-time 120 \
+              "$URL"); then
+              codigo="$respuesta"
+            fi
+
+            echo "Intento $intento: HTTP $codigo"
+
+            if [ "$codigo" -ge 200 ] && [ "$codigo" -lt 400 ]; then
+              echo "La API de Bowling respondió correctamente."
+              exit 0
+            fi
+
+            sleep 15
+          done
+
+          echo "La API no respondió correctamente después de 3 intentos."
+          exit 1
